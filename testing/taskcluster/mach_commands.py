@@ -13,9 +13,6 @@ import subprocess
 import sys
 import urllib2
 
-import pystache
-import yaml
-
 from mach.decorators import (
     CommandArgument,
     CommandProvider,
@@ -25,6 +22,7 @@ from mach.decorators import (
 from taskcluster_graph.commit_parser import parse_commit
 from taskcluster_graph.slugid import slugid
 from taskcluster_graph.from_now import json_time_from_now, current_json_time
+from taskcluster_graph.templates import Templates
 
 import taskcluster_graph.build_task
 
@@ -69,14 +67,6 @@ def get_latest_hg_revision(repository):
         sys.exit(1)
 
     return revision
-
-def import_yaml(path, variables=None):
-    ''' Load a yml file relative to the root of this file'''
-    content = open(os.path.join(ROOT, path)).read()
-    if variables is not None:
-        content = pystache.render(content, variables)
-    task = yaml.load(content)
-    return task
 
 def docker_image(name):
     ''' Determine the docker tag/revision from an in tree docker file '''
@@ -126,7 +116,8 @@ class TryGraph(object):
     @CommandArgument('--extend-graph',
         action="store_true", dest="ci", help='Omit create graph arguments')
     def create_graph(self, **params):
-        jobs = import_yaml('job_flags.yml')
+        templates = Templates(ROOT)
+        jobs = templates.load('job_flags.yml', {})
         job_graph = parse_commit(params['message'], jobs)
         # Template parameters used when expanding the graph
         parameters = {
@@ -159,7 +150,7 @@ class TryGraph(object):
         for build in job_graph:
             build_parameters = dict(parameters, **build['additional-parameters'])
             build_parameters['build_slugid'] = slugid()
-            build_task = import_yaml(build['task'], build_parameters)
+            build_task = templates.load(build['task'], build_parameters)
 
             # Ensure each build graph is valid after construction.
             taskcluster_graph.build_task.validate(build_task)
@@ -192,7 +183,7 @@ class TryGraph(object):
 
                 for chunk in range(1, test_parameters['total_chunks'] + 1):
                     test_parameters['chunk'] = chunk
-                    test_task = import_yaml(test['task'], test_parameters)
+                    test_task = templates.load(test['task'], test_parameters)
                     test_task['taskId'] = slugid()
 
                     if 'requires' not in test_task:
@@ -235,6 +226,7 @@ class CIBuild(object):
     @CommandArgument('build_task',
         help='path to build task definition')
     def create_ci_build(self, **params):
+        templates = Templates(ROOT)
         # TODO handle git repos
         head_repository = params['head_repository']
         if not head_repository:
@@ -262,7 +254,7 @@ class CIBuild(object):
         }
 
         try:
-            build_task = import_yaml(params['build_task'], build_parameters)
+            build_task = templates.load(params['build_task'], build_parameters)
         except IOError:
             sys.stderr.write(
                 "Could not load build task file.  Ensure path is a relative " \
