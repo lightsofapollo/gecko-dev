@@ -62,6 +62,22 @@ class TemplatesTest(unittest.TestCase):
         with self.assertRaisesRegexp(TemplatesException, 'circular'):
             self.subject.load('circular.yml', {})
 
+    def test_inheritance_with_simple_extensions(self):
+        content = self.subject.load('extend_parent.yml', {})
+        self.assertEquals(content, {
+            'list': ['1', '2', '3', '4'],
+            'obj': {
+                'from_parent': True,
+                'deeper': {
+                    'woot': 'bar',
+                    'list': ['baz', 'bar']
+                },
+                'level': 2,
+            },
+            'was_list': { 'replaced': True }
+        })
+
+
 if __name__ == '__main__':
     mozunit.main()
 

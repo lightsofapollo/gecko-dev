@@ -6,6 +6,33 @@ import yaml
 # Key used in template inheritance...
 INHERITS_KEY = '$inherits'
 
+def merge_to(source, dest):
+    '''
+    Merge dict and arrays (override scalar values)
+
+    :param dict source: to copy from
+    :param dict dest: to copy to.
+    '''
+
+    for key in source:
+        # Override mismatching or empty types
+        if type(source[key]) != type(dest.get(key)):
+            dest[key] = source[key]
+            continue
+
+        # Merge dict
+        if isinstance(source[key], dict):
+            merge_to(source[key], dest[key])
+            continue
+
+        if isinstance(source[key], list):
+            dest[key] = dest[key] + source[key]
+            continue
+
+        dest[key] = source[key]
+
+    return dest
+
 class TemplatesException(Exception):
     pass
 
@@ -49,7 +76,12 @@ class Templates():
             msg = 'Error in "{}" circular template inheritance'.format(path)
             raise TemplatesException(msg)
 
-        return self.load(template, variables, seen)
+        out = self.load(template, variables, seen)
+
+        # Anything left in obj is merged into final results (and overrides)
+        return merge_to(obj, out)
+
+
 
     def render(self, path, content, parameters, seen):
         '''
