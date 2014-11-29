@@ -38,11 +38,22 @@ class TemplatesTest(unittest.TestCase):
         '''
         The simple single pass inheritance case.
         '''
-        content = self.subject.load('inherit.yml')
+        content = self.subject.load('inherit.yml', {})
         self.assertEqual(content, {
             'content': 'content',
             'variable': 'inherit'
         })
+
+    def test_inheritance_implicat_pass(self):
+        '''
+        Implicitly pass parameters from the child to the ancestor.
+        '''
+        content = self.subject.load('inherit_pass.yml', {
+            'a': 'overriden'
+        })
+
+        self.assertEqual(content, { 'values': ['overriden', 'b', 'c'] });
+
 
     def test_inheritance_circular(self):
         '''

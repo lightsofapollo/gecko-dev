@@ -29,13 +29,17 @@ class Templates():
 
         self.root = root;
 
-    def _inherits(self, path, obj, seen):
+    def _inherits(self, path, obj, properties, seen):
         blueprint = obj.pop(INHERITS_KEY)
         seen.add(path)
 
         # Resolve the path here so we can detect circular references.
         template = self.resolve_path(blueprint.get('from'))
         variables = blueprint.get('variables', {})
+
+        # Passed parameters override anything in the task itself.
+        for key in properties:
+            variables[key] = properties[key]
 
         if not template:
             msg = '"{}" inheritance template missing'.format(path)
@@ -62,7 +66,7 @@ class Templates():
         # In addition to the usual template logic done by mustache we also
         # handle special '$inherit' dict keys.
         if isinstance(result, dict) and INHERITS_KEY in result:
-            return self._inherits(path, result, seen)
+            return self._inherits(path, result, parameters, seen)
 
         return result
 
