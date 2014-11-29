@@ -113,12 +113,12 @@ class Templates():
         :param dict parameters: To template yaml file with.
         '''
         if not path:
-            raise TemplateException('path is required')
+            raise TemplatesException('path is required')
 
         path = self.resolve_path(path)
 
         if not os.path.isfile(path):
-            raise TemplateException('"{}" is not a file'.format(path))
+            raise TemplatesException('"{}" is not a file'.format(path))
 
         content = open(path).read()
         return self.render(path, content, parameters, seen)

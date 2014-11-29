@@ -62,6 +62,12 @@ class TemplatesTest(unittest.TestCase):
         with self.assertRaisesRegexp(TemplatesException, 'circular'):
             self.subject.load('circular.yml', {})
 
+    def test_deep_inheritance(self):
+        content = self.subject.load('deep/4.yml', {
+            'value': 'myvalue'
+        })
+        self.assertEqual(content, { 'variable': 'myvalue' })
+
     def test_inheritance_with_simple_extensions(self):
         content = self.subject.load('extend_parent.yml', {})
         self.assertEquals(content, {
