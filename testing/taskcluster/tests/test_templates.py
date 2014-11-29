@@ -28,11 +28,28 @@ class TemplatesTest(unittest.TestCase):
         content = self.subject.load('templates.yml', {
             'woot': 'bar'
         })
+
         self.assertEquals(content, {
             'content': 'content',
             'variable': 'bar'
         })
 
+    def test_inheritance(self):
+        '''
+        The simple single pass inheritance case.
+        '''
+        content = self.subject.load('inherit.yml')
+        self.assertEqual(content, {
+            'content': 'content',
+            'variable': 'inherit'
+        })
+
+    def test_inheritance_circular(self):
+        '''
+        Circular reference handling.
+        '''
+        with self.assertRaisesRegexp(TemplatesException, 'circular'):
+            self.subject.load('circular.yml', {})
 
 if __name__ == '__main__':
     mozunit.main()

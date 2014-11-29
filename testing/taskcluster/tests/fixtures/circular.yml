@@ -1,0 +1,4 @@
+$inherits:
+  from: 'inherit.yml'
+  variables:
+    woot: 'inherit'
