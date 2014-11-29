@@ -73,10 +73,15 @@ class Templates():
             raise TemplatesException(msg)
 
         if template in seen:
-            msg = 'Error in "{}" circular template inheritance'.format(path)
-            raise TemplatesException(msg)
+            msg = 'Error while handling "{}" in "{}" circular template' + \
+                  'inheritance seen \n  {}'
+            raise TemplatesException(msg.format(path, template, seen))
 
-        out = self.load(template, variables, seen)
+        try:
+            out = self.load(template, variables, seen)
+        except TemplatesException as e:
+            msg = 'Error expanding parent ("{}") of "{}" original error {}'
+            raise TemplatesException(msg.format(template, path, str(e)))
 
         # Anything left in obj is merged into final results (and overrides)
         return merge_to(obj, out)
@@ -105,13 +110,15 @@ class Templates():
     def resolve_path(self, path):
         return os.path.join(self.root, path)
 
-    def load(self, path, parameters=None, seen=set()):
+    def load(self, path, parameters=None, seen=None):
         '''
         Load an render the given yaml path.
 
         :param str path: Location of yaml file to load (relative to root).
         :param dict parameters: To template yaml file with.
         '''
+        seen = seen or set()
+
         if not path:
             raise TemplatesException('path is required')
 

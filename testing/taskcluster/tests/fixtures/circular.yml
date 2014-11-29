@@ -1,4 +1,4 @@
 $inherits:
-  from: 'inherit.yml'
+  from: 'circular_ref.yml'
   variables:
     woot: 'inherit'
